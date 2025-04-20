@@ -2,10 +2,10 @@ name: Python CI + Test PDF Report
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # Puedes cambiar a tu rama principal
 
 permissions:
-  contents: write
+  contents: write  # 🔑 Permiso para hacer push a gh-pages
 
 jobs:
   test-and-deploy:
@@ -37,38 +37,22 @@ jobs:
       run: |
         python -c "import pdfkit; pdfkit.from_file('report.html', 'latest_test_report.pdf')"
 
-    - name: 🚀 Subir PDF e index.html a gh-pages
+    - name: 📝 Crear index.html con enlace al PDF
       run: |
-        # Configurar git
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte</title></head><body><h1>📄 Último Reporte de Pruebas</h1><p><a href="latest_test_report.pdf" target="_blank">Haz clic aquí para ver el PDF</a></p></body></html>' > index.html
+
+    - name: 🚀 Subir PDF a gh-pages
+      run: |
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
 
-        # Obtener rama gh-pages
         git fetch origin gh-pages || true
         git checkout -B gh-pages
-        
-        # Limpiar rama excepto .git
-        find . -not -path './.git*' -delete
+        git rm -rf . || true
 
-        # Crear estructura de directorios
-        mkdir -p reports
-        
-        # Mover PDF
-        mv ../latest_test_report.pdf reports/
-        
-        # Crear index.html que redirige al PDF
-        echo '<!DOCTYPE html>
-        <html>
-        <head>
-            <meta http-equiv="refresh" content="0; url=./reports/latest_test_report.pdf" />
-            <title>Test Results</title>
-        </head>
-        <body>
-            <p>Redirecting to <a href="./reports/latest_test_report.pdf">latest test report</a>...</p>
-        </body>
-        </html>' > index.html
+        mv latest_test_report.pdf .
+        mv index.html .
 
-        # Hacer commit y push
-        git add .
-        git commit -m "Update test report and index - $(date -u)" || echo "No changes to commit"
+        git add latest_test_report.pdf index.html
+        git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
         git push origin gh-pages --force
