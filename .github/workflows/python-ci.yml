@@ -37,7 +37,11 @@ jobs:
       run: |
         python -c "import pdfkit; pdfkit.from_file('report.html', 'latest_test_report.pdf')"
 
-    - name: 🚀 Subir PDF a gh-pages
+    - name: 📝 Crear index.html para GitHub Pages
+      run: |
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte</title></head><body><h1>📄 Reporte de Pruebas</h1><p><a href="latest_test_report.pdf" target="_blank">Ver PDF</a></p></body></html>' > index.html
+
+    - name: 🚀 Subir PDF e index.html a gh-pages
       run: |
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
@@ -46,13 +50,9 @@ jobs:
         git checkout -B gh-pages
         git rm -rf . || true
 
-        mkdir -p reports
-        mv latest_test_report.pdf reports/
+        mv latest_test_report.pdf .
+        mv index.html .
 
-        git add reports/latest_test_report.pdf
+        git add latest_test_report.pdf index.html
         git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
         git push origin gh-pages --force
-
-    - name: 📝 Crear index.html
-      run: |
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test Report</title></head><body><h1>📄 Último Reporte</h1><p><a href="latest_test_report.pdf" target="_blank">Ver PDF</a></p></body></html>' > index.html
