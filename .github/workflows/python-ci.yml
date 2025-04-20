@@ -1,61 +1,51 @@
-name: Generate and Deploy Test PDF
+name: Python CI + Test PDF Report
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]  # Puedes cambiar a tu rama principal
+
+permissions:
+  contents: write  # 🔑 Permiso para hacer push a gh-pages
 
 jobs:
-  generate-pdf:
+  test-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Necesario para hacer push
 
     steps:
-    # Paso 1: Obtener el código
-    - uses: actions/checkout@v4
-    
-    # Paso 2: Configurar Python
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: 🧾 Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: 🐍 Configurar Python
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
-    # Paso 3: Instalar lo necesario
-    - name: Install dependencies
+
+    - name: 📦 Instalar dependencias
       run: |
-        pip install pytest pytest-html
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
         sudo apt-get install -y wkhtmltopdf
-    
-    # Paso 4: Ejecutar pruebas y generar PDF
-    - name: Run tests and generate PDF
+
+    - name: ✅ Ejecutar tests y generar HTML report
       run: |
-        # Ejecutar pruebas y generar reporte HTML
-        pytest tests/ --html=test-report.html --self-contained-html
-        
-        # Convertir HTML a PDF
-        wkhtmltopdf --enable-local-file-access test-report.html test-report.pdf
-    
-    # Paso 5: Subir PDF a gh-pages
-    - name: Deploy PDF to gh-pages
+        pytest --html=report.html
+
+    - name: 📄 Convertir HTML a PDF
       run: |
-        # Configurar git
+        python -c "import pdfkit; pdfkit.from_file('report.html', 'latest_test_report.pdf')"
+
+    - name: 🚀 Subir PDF a gh-pages
+      run: |
+        git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        
-        # Obtener o crear rama gh-pages
+
         git fetch origin gh-pages || true
-        if git show-ref --quiet refs/remotes/origin/gh-pages; then
-          git checkout gh-pages
-          git pull origin gh-pages
-        else
-          git checkout --orphan gh-pages
-          git rm -rf . || true
-        fi
-        
-        # Mover el PDF y hacer commit
-        mv test-report.pdf .
-        git add test-report.pdf
-        git commit -m "Update test report [$(date +'%Y-%m-%d %H:%M')]"
-        git push origin gh-pages
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        git checkout -B gh-pages
+        git rm -rf . || true
+
+        mkdir -p reports
+        mv latest_test_report.pdf reports/
+
+        git add reports/latest_test_report.pdf
+        git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
+        git push origin gh-pages --force
