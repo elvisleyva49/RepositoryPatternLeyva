@@ -50,9 +50,6 @@ jobs:
         git checkout -B gh-pages
         git rm -rf . || true
 
-        mv latest_test_report.pdf .
-        mv index.html .
-
         git add latest_test_report.pdf index.html
         git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
         git push origin gh-pages --force
