@@ -2,10 +2,10 @@ name: Python CI + Test PDF Report
 
 on:
   push:
-    branches: [ main ]  # Puedes cambiar a tu rama principal
+    branches: [ main ]
 
 permissions:
-  contents: write  # 🔑 Permiso para hacer push a gh-pages
+  contents: write
 
 jobs:
   test-and-deploy:
@@ -37,22 +37,38 @@ jobs:
       run: |
         python -c "import pdfkit; pdfkit.from_file('report.html', 'latest_test_report.pdf')"
 
-    - name: 📝 Crear index.html para GitHub Pages
-      run: |
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte</title></head><body><h1>📄 Reporte de Pruebas</h1><p><a href="latest_test_report.pdf" target="_blank">Ver PDF</a></p></body></html>' > index.html
-
     - name: 🚀 Subir PDF e index.html a gh-pages
       run: |
+        # Configurar git
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
 
+        # Obtener rama gh-pages
         git fetch origin gh-pages || true
         git checkout -B gh-pages
-        git rm -rf . || true
+        
+        # Limpiar rama excepto .git
+        find . -not -path './.git*' -delete
 
-        mv latest_test_report.pdf .
-        mv index.html .
+        # Crear estructura de directorios
+        mkdir -p reports
+        
+        # Mover PDF
+        mv ../latest_test_report.pdf reports/
+        
+        # Crear index.html que redirige al PDF
+        echo '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="0; url=./reports/latest_test_report.pdf" />
+            <title>Test Results</title>
+        </head>
+        <body>
+            <p>Redirecting to <a href="./reports/latest_test_report.pdf">latest test report</a>...</p>
+        </body>
+        </html>' > index.html
 
-        git add latest_test_report.pdf index.html
-        git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
+        # Hacer commit y push
+        git add .
+        git commit -m "Update test report and index - $(date -u)" || echo "No changes to commit"
         git push origin gh-pages --force
