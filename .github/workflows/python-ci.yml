@@ -52,3 +52,7 @@ jobs:
         git add reports/latest_test_report.pdf
         git commit -m "Update test report PDF - $(date -u)" || echo "No changes to commit"
         git push origin gh-pages --force
+
+    - name: 📝 Crear index.html
+      run: |
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test Report</title></head><body><h1>📄 Último Reporte</h1><p><a href="latest_test_report.pdf" target="_blank">Ver PDF</a></p></body></html>' > index.html
