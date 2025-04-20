@@ -3,3 +3,4 @@ pytest-cov
 pylint
 black
 pytest-html
+pdfkit
