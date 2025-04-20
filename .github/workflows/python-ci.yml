@@ -31,7 +31,7 @@ jobs:
 
     - name: ✅ Ejecutar tests y generar HTML report
       run: |
-        pytest --html=report.html
+        pytest --html=report.html --self-contained-html
 
     - name: 📄 Convertir HTML a PDF
       run: |
