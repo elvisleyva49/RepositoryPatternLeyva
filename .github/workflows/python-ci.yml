@@ -26,6 +26,9 @@ jobs:
         pip install -r requirements.txt
         sudo apt-get install -y wkhtmltopdf
 
+    - name: 📂 Agregar el proyecto al PYTHONPATH
+      run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+
     - name: ✅ Ejecutar tests y generar HTML report
       run: |
         pytest --html=report.html
